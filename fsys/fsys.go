@@ -44,6 +44,15 @@ func (fs *FileSys) Write(content []byte, fileName string) error {
     defer file.Close();
 
 
+    if err := file.Truncate(0); err != nil {
+        return err;
+    };
+
+    if _, err := file.Seek(0, 0); err != nil {
+        return err;
+    };
+
+    
     if _, err = file.Write(content); err != nil {
         return err;
     };
