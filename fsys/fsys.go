@@ -62,6 +62,37 @@ func (fs *FileSys) Write(content []byte, fileName string) error {
 };
 
 
+func (fs *FileSys) WriteString(content string, fileName string) error {
+    
+    file, err := os.OpenFile(fileName, os.O_CREATE|os.O_WRONLY, 0744);
+
+
+    if err != nil {
+        return err;
+    };
+
+
+    defer file.Close();
+
+
+    if err := file.Truncate(0); err != nil {
+        return err;
+    };
+
+    if _, err := file.Seek(0, 0); err != nil {
+        return err;
+    };
+
+    
+    if _, err = file.Write([]byte(content)); err != nil {
+        return err;
+    };
+
+
+    return nil;
+};
+
+
 func (fs *FileSys) Read(fileName string) ([]byte, error) {
     file, err := os.OpenFile(fileName, os.O_RDONLY, 0744);
 
