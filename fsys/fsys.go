@@ -11,7 +11,7 @@ type FileSys struct {
     Unm           any
 };
 
-
+//AppendWrite appends content to an exisiting file, or creates it if it doesn't exist
 func (fs *FileSys) AppendWrite(content []byte, fileName string) error {
 
     file, err := os.OpenFile(fileName, os.O_CREATE|os.O_APPEND|os.O_WRONLY, 0744);
