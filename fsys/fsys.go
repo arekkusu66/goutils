@@ -14,7 +14,7 @@ type FileSys struct {
 
 func (fs *FileSys) AppendWrite(content []byte, fileName string) error {
 
-    file, err := os.OpenFile(fileName, os.O_APPEND|os.O_WRONLY, 0744);
+    file, err := os.OpenFile(fileName, os.O_CREATE|os.O_APPEND|os.O_WRONLY, 0744);
 
     if err != nil {
         return err;
