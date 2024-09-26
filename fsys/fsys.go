@@ -10,7 +10,6 @@ import (
 
 type FileSys struct {
     Unm           any
-    Perms         fs.FileMode
 }
 
 //AppendWrite appends content to an exisiting file, or creates it if it doesn't exist
