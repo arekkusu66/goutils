@@ -3,18 +3,20 @@ package fsys
 import (
 	"encoding/json"
 	"io"
+	"io/fs"
 	"os"
 )
 
 
 type FileSys struct {
     Unm           any
+    Perms         fs.FileMode
 }
 
 //AppendWrite appends content to an exisiting file, or creates it if it doesn't exist
-func (fs *FileSys) AppendWrite(content []byte, fileName string) error {
+func (*FileSys) AppendWrite(content []byte, fileName string, perms fs.FileMode) error {
 
-    file, err := os.OpenFile(fileName, os.O_CREATE|os.O_APPEND|os.O_WRONLY, 0744)
+    file, err := os.OpenFile(fileName, os.O_CREATE|os.O_APPEND|os.O_WRONLY, perms)
 
     if err != nil {
         return err
@@ -31,15 +33,13 @@ func (fs *FileSys) AppendWrite(content []byte, fileName string) error {
 }
 
 
-func (fs *FileSys) Write(content []byte, fileName string) error {
+func (*FileSys) Write(content []byte, fileName string, perms fs.FileMode) error {
     
-    file, err := os.OpenFile(fileName, os.O_CREATE|os.O_WRONLY, 0744)
-
+    file, err := os.OpenFile(fileName, os.O_CREATE|os.O_WRONLY, perms)
 
     if err != nil {
         return err
     }
-
 
     defer file.Close()
 
@@ -62,15 +62,14 @@ func (fs *FileSys) Write(content []byte, fileName string) error {
 }
 
 
-func (fs *FileSys) WriteString(content string, fileName string) error {
+func (*FileSys) WriteString(content string, fileName string, perms fs.FileMode) error {
     
-    file, err := os.OpenFile(fileName, os.O_CREATE|os.O_WRONLY, 0744)
+    file, err := os.OpenFile(fileName, os.O_CREATE|os.O_WRONLY, perms)
 
 
     if err != nil {
         return err
     }
-
 
     defer file.Close()
 
@@ -93,14 +92,16 @@ func (fs *FileSys) WriteString(content string, fileName string) error {
 }
 
 
-func (fs *FileSys) Read(fileName string) ([]byte, error) {
-    file, err := os.OpenFile(fileName, os.O_RDONLY, 0744)
+func (fsys *FileSys) Read(fileName string, perms fs.FileMode) ([]byte, error) {
+
+    file, err := os.OpenFile(fileName, os.O_RDONLY, perms)
 
     if err != nil {
         return nil, err
     }
 
     defer file.Close()
+
 
     content, err := io.ReadAll(file)
 
@@ -109,12 +110,26 @@ func (fs *FileSys) Read(fileName string) ([]byte, error) {
     }
 
     
-    if fs.Unm != nil {
-        if err = json.Unmarshal(content, &fs.Unm); err != nil {
+    if fsys.Unm != nil {
+        if err = json.Unmarshal(content, &fsys.Unm); err != nil {
             return nil, err
         }
     }
 
 
     return content, nil
+}
+
+
+func (*FileSys) OsFile(fileName string, flag int, perms fs.FileMode) (*os.File, error) {
+
+    file, err := os.OpenFile(fileName, flag, perms)
+
+    if err != nil {
+        return nil, err
+    }
+
+    defer file.Close()
+
+    return file, nil
 }

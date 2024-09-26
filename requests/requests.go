@@ -3,7 +3,9 @@ package requests
 import (
 	"bytes"
 	"encoding/json"
+	"errors"
 	"io"
+	"io/fs"
 	"net/http"
 	"regexp"
 
@@ -14,12 +16,12 @@ import (
 type Request struct {
 	Unm					any
 	Output				string
-	ContentType			string
+	FilePerms			fs.FileMode
 }
 
 
 //Makes a POST request, if ContentType isn't specified, it defaults to application/json
-func (rq *Request) POST(url string, body any) ([]byte, error) {
+func (rq *Request) POST(url string, contentType string, body any) ([]byte, error) {
 
     jsonData, err := json.Marshal(body)
 
@@ -27,16 +29,7 @@ func (rq *Request) POST(url string, body any) ([]byte, error) {
 		return nil, err
     }
 
-
-	var contentType string
-
-	if rq.ContentType == "" {
-		contentType = "application/json"
-	} else {
-		contentType = rq.ContentType
-	}
-
-    response, err := http.Post(url , contentType , bytes.NewBuffer(jsonData))
+    response, err := http.Post(url, contentType, bytes.NewBuffer(jsonData))
 
     if err != nil {
 		return nil, err
@@ -52,7 +45,7 @@ func (rq *Request) POST(url string, body any) ([]byte, error) {
 	}
 
 
-	if rq.Output != "" {
+	if rq.Output != "" && rq.FilePerms != 0 {
 		var file = &fsys.FileSys{}
 
 		if regexp.MustCompile(`\.json$`).MatchString(rq.Output) {
@@ -68,15 +61,17 @@ func (rq *Request) POST(url string, body any) ([]byte, error) {
 				return nil, err
 			}
 
-			if err = file.Write(d, rq.Output); err != nil {
+			if err = file.Write(d, rq.Output, rq.FilePerms); err != nil {
 				return nil, err
 			}
 
 		} else {
-			if err = file.Write(responseData, rq.Output); err != nil {
+			if err = file.Write(responseData, rq.Output, rq.FilePerms); err != nil {
 				return nil, err
 			}
 		}
+	} else {
+		return nil, errors.New("One of the Output or FilePerms fields are empty")
 	}
 
 
@@ -102,7 +97,7 @@ func (rq *Request) GET(url string) ([]byte, error) {
 	defer response.Body.Close()
 	
 
-	body, err := io.ReadAll(response.Body)
+	responseData, err := io.ReadAll(response.Body)
 
 	if err != nil {
 		return nil, err
@@ -110,13 +105,13 @@ func (rq *Request) GET(url string) ([]byte, error) {
 	
 
 
-	if rq.Output != "" {
+	if rq.Output != "" && rq.FilePerms != 0 {
 		var file = &fsys.FileSys{}
 
 		if regexp.MustCompile(`\.json$`).MatchString(rq.Output) {
 			var mapUnm = make(map[string]interface{})
 
-			err = json.Unmarshal(body, &mapUnm)
+			err = json.Unmarshal(responseData, &mapUnm)
 
 			if err != nil {
 				return nil, err
@@ -128,25 +123,27 @@ func (rq *Request) GET(url string) ([]byte, error) {
 				return nil, err
 			}
 
-			if err = file.Write(d, rq.Output); err != nil {
+			if err = file.Write(d, rq.Output, rq.FilePerms); err != nil {
 				return nil, err
 			}
 			
 		} else {
-			if err = file.Write(body, rq.Output); err != nil {
+			if err = file.Write(responseData, rq.Output, rq.FilePerms); err != nil {
 				return nil, err
 			}
 		}
+	} else {
+		return nil, errors.New("One of the Output or FilePerms fields are empty")
 	}
 
 
 
 	if rq.Unm != nil {
-        if err = json.Unmarshal(body, &rq.Unm); err != nil {
+        if err = json.Unmarshal(responseData, &rq.Unm); err != nil {
             return nil, err
         }
     }
 	
 
-	return body, nil
+	return responseData, nil
 }
