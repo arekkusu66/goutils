@@ -128,7 +128,5 @@ func (*FileSys) OsFile(fileName string, flag int, perms fs.FileMode) (*os.File, 
         return nil, err
     }
 
-    defer file.Close()
-
     return file, nil
 }
