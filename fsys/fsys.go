@@ -118,15 +118,3 @@ func (fsys *FileSys) Read(fileName string, perms fs.FileMode) ([]byte, error) {
 
     return content, nil
 }
-
-
-func (*FileSys) OsFile(fileName string, flag int, perms fs.FileMode) (*os.File, error) {
-
-    file, err := os.OpenFile(fileName, flag, perms)
-
-    if err != nil {
-        return nil, err
-    }
-
-    return file, nil
-}
