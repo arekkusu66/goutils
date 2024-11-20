@@ -9,12 +9,10 @@ import (
 //
 //The mux parameter represents the http requests multiplexer and will default to http.DefaultServeMux if it is nil
 func Dir(dirname string, mux *http.ServeMux) {
-	var handler *http.ServeMux
+	var handler *http.ServeMux = http.DefaultServeMux
 
 	if mux != nil {
 		handler = mux
-	} else {
-		handler = http.DefaultServeMux
 	}
 
 	handler.Handle(fmt.Sprintf("%s/", dirname), http.StripPrefix(fmt.Sprintf("%s/", dirname), http.FileServer(http.Dir(fmt.Sprintf(".%s", dirname)))))
